@@ -13,24 +13,52 @@ Original file is located at
 # Question 3
 # Optimizers combined
 # Some changes
-# NN_fit -> run_NN
+# adding identity function
 
-!pip install wandb
+# !pip install wandb
 import wandb
 wandb.login(key = "c28eda24dacbd50a57332e445cfdfb2f4c16799c")
 
-import wandb
-wandb.init(project="DL_A1_optimizers_combined_13.ipynb")
+
 
 import numpy as np
 import math
 import pandas as pd
 import matplotlib.pyplot as plt
-from keras.datasets import fashion_mnist
+
+
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('-wp' , '--wandb_project' , required = False , metavar = "" , default = 'train_02' , type = str , help = "Project name used to track experiments in Weights & Biases dashboard")
+parser.add_argument('-we' , '--wandb_entity' , required = False , metavar = "" , default = 'rajmahajan24' , type = str , help = "Wandb Entity used to track experiments in the Weights & Biases dashboard.")
+parser.add_argument('-d' , '--dataset' , required = False , metavar = "" , default = 'fashion_mnist' , type = str , choices = ["mnist","fashion_mnist"] ,help = 'choices: ["mnist", "fashion_mnist"]')
+parser.add_argument('-e' , '--epochs' , required = False , metavar = "" , default = '10' , type = str , help = "Number of epochs to train neural network.")
+parser.add_argument('-b' , '--batch_size' , required = False , metavar = "" , default = '64' , type = str , help = "Batch size used to train neural network.")
+parser.add_argument('-l' , '--loss' , required = False , metavar = "" , default = 'cross_entropy' , type = str , choices = ["mean_squared_error", "cross_entropy"] , help = 'choices: ["mean_squared_error", "cross_entropy"]')
+parser.add_argument('-o' , '--optimizer' , required = False , metavar = "" , default = 'nag' , type = str , choices = ["sgd", "momentum", "nag", "rmsprop", "adam", "nadam"] , help = 'choices: ["sgd", "momentum", "nag", "rmsprop", "adam", "nadam"]')
+parser.add_argument('-lr' , '--learning_rate' , required = False , metavar = "" , default = '0.1' , type = str , help = "Learning rate used to optimize model parameters")
+parser.add_argument('-m' , '--momentum' , required = False , metavar = "" , default = '0.9' , type = str , help = "Momentum used by momentum and nag optimizers.")
+parser.add_argument('-beta' , '--beta' , required = False , metavar = "" , default = '0.5' , type = str , help = "Beta used by rmsprop optimizer")
+parser.add_argument('-beta1' , '--beta1' , required = False , metavar = "" , default = '0.5' , type = str , help = "Beta1 used by adam and nadam optimizers.")
+parser.add_argument('-beta2' , '--beta2' , required = False , metavar = "" , default = '0.5' , type = str , help = "Beta2 used by adam and nadam optimizers.")
+parser.add_argument('-eps' , '--epsilon' , required = False , metavar = "" , default = '0.000001' , type = str , help = "Epsilon used by optimizers.")
+parser.add_argument('-w_d' , '--weight_decay' , required = False , metavar = "" , default = '0.0005' , type = str , help = "Weight decay used by optimizers.")
+parser.add_argument('-w_i' , '--weight_init' , required = False , metavar = "" , default = 'Xavier' , type = str , choices = ["random", "Xavier"] , help = 'choices: ["random", "Xavier"]')
+parser.add_argument('-nhl' , '--num_layers' , required = False , metavar = "" , default = '2' , type = str , help = "Number of hidden layers used in feedforward neural network.")
+parser.add_argument('-sz' , '--hidden_size' , required = False , metavar = "" , default = '128' , type = str , help = "Number of hidden neurons in a feedforward layer.")
+parser.add_argument('-a' , '--activation' , required = False , metavar = "" , default = 'tanh' , type = str , choices = ["identity", "sigmoid", "tanh", "ReLU"] , help = 'choices: ["identity", "sigmoid", "tanh", "ReLU"]')
+argparse = parser.parse_args()
+if(argparse.dataset == 'fashion_mnist'):
+    from keras.datasets import fashion_mnist
+    (X_train, Y_train), (x_test, y_test) = fashion_mnist.load_data()
+elif(argparse.dataset == 'mnist'):
+    from keras.datasets import mnist
+    (X_train, Y_train), (x_test, y_test) = mnist.load_data()
+
 from sklearn.model_selection import train_test_split
 
 # Load the Fashion-MNIST dataset
-(X_train, Y_train), (x_test, y_test) = fashion_mnist.load_data()
+
 X_train=X_train.reshape(X_train.shape[0],784)
 x_test=x_test.reshape(x_test.shape[0],784)
 Y_train=Y_train.reshape(60000,1)
@@ -47,13 +75,16 @@ x_train,x_val,y_train,y_val = train_test_split(X_train , Y_train , test_size = 0
 # x_train.shape
 x_val.shape
 
+
+import wandb
+wandb.init(project=argparse.wandb_project)
+
 def actual_prob_dist(y) :
   ans=np.zeros((10, 1))
   ans[y]=1
   return(ans)
 
 def sigmoid(a) :
-  # s=1/(1+np.exp(a))
 
   if isinstance(a,np.ndarray):
     return 1.0 / (1.0 + np.exp(-a))
@@ -62,9 +93,12 @@ def sigmoid(a) :
       return 1.0 / (1.0 + np.exp(-a))
     else :
       return np.exp(a) / ( 1.0 + np.exp(a))
-  # return(s)
+  
 
-
+def identity_fun(a) :
+    return(a)
+def derivative_identity(a) :
+    return(np.ones(a.shape))
 
 def derivative_sigmoid(x):
   ans = sigmoid(x) * (1 -sigmoid(x))
@@ -167,23 +201,28 @@ def initilize_bias(num_layers,neurons):
 def activation_fun(activation,a):
   if(activation == "sigmoid"):
     return(sigmoid(a))
-  elif(activation == "relu"):
+  elif(activation == "ReLU"):
     return(relu(a))
   elif(activation == "tanh"):
     return(tanh(a))
+  elif(activation == "identity"):
+    return(identity_fun(a))
+
 
 def derivative_activation_fun(activation,a):
   if(activation == "sigmoid"):
     return(derivative_sigmoid(a))
-  elif(activation == "relu"):
+  elif(activation == "ReLU"):
     return(derivative_relu(a))
   elif(activation == "tanh"):
     return(derivative_tanh(a))
+  elif(activation == "identity"):
+    return(derivative_identity(a))
   
 def loss_function(loss_fun,yhat,y):
   if(loss_fun == "cross_entropy"):
     loss = (-math.log(yhat[y]))
-  elif(loss_fun == "mse"):
+  elif(loss_fun == "mean_squared_error"):
     Y = actual_prob_dist(y)
     loss = (1/2) * np.sum((Y-yhat)**2)
   return(loss)
@@ -208,7 +247,7 @@ def forward_prop(activation,theta,b,num_layers,h):
 # only for 1 image
 def backward_prop(theta,h_list,a_list,y,yhat,num_layers,batch_size,activation,loss_fun):
   grad_a=-(actual_prob_dist(y) - yhat)
-  if(loss_fun == "mse"):
+  if(loss_fun == "mean_squared_error"):
       grad_a *= derivative_softmax(a_list[len(a_list)-1]);
   list_grad_w=[]
   list_grad_b=[]
@@ -426,7 +465,7 @@ def momentum_SGD(theta,b,epochs,eta,beta,activation,x_train,y_train,neurons, num
     wandb.log({"train_accuracy": train_accuracy, "validation_accuracy": val_accuracy, "training_loss": loss, "validation cost": val_loss, 'epoch': t})
   return(theta,b)
 
-def RMS_SGD(theta,b,epochs,eta,beta,activation,x_train,y_train,neurons, num_layers,batch_size,loss_fun,weight_decay):
+def RMS_SGD(theta,b,epochs,eta,beta,activation,x_train,y_train,neurons, num_layers,batch_size,loss_fun,weight_decay,epsilon):
  
   t=0
   global x_val
@@ -482,8 +521,8 @@ def RMS_SGD(theta,b,epochs,eta,beta,activation,x_train,y_train,neurons, num_laye
             list_u_grad_b.append(beta * prev_grad_ub[i] + (1 - beta) * list_grad_b[i] ** 2)
         
         for i in range(0,len(list_grad_w)):
-          theta[i] -= (eta * list_grad_w[i].transpose())/(list_u_grad_w[i].transpose() + 1e-6) ** 0.5
-          b[i] -= (eta * list_grad_b[i].transpose())/(list_u_grad_b[i].transpose()+ 1e-6) ** 0.5
+          theta[i] -= (eta * list_grad_w[i].transpose())/(list_u_grad_w[i].transpose() + epsilon) ** 0.5
+          b[i] -= (eta * list_grad_b[i].transpose())/(list_u_grad_b[i].transpose()+ epsilon) ** 0.5
         
         prev_grad_uw = list_u_grad_w.copy()
         prev_grad_ub = list_u_grad_b.copy()
@@ -508,8 +547,8 @@ def RMS_SGD(theta,b,epochs,eta,beta,activation,x_train,y_train,neurons, num_laye
         list_u_grad_b.append(beta * prev_grad_ub[i] + (1 - beta) * list_grad_b[i] ** 2)
       
       for i in range(0,len(list_grad_w)):
-        theta[i] -= (eta * list_grad_w[i].transpose())/(list_u_grad_w[i].transpose() + 1e-6) ** 0.5
-        b[i] -= (eta * list_grad_b[i].transpose())/(list_u_grad_b[i].transpose()+ 1e-6) ** 0.5
+        theta[i] -= (eta * list_grad_w[i].transpose())/(list_u_grad_w[i].transpose() + epsilon) ** 0.5
+        b[i] -= (eta * list_grad_b[i].transpose())/(list_u_grad_b[i].transpose()+ epsilon) ** 0.5
       
       prev_grad_uw = list_u_grad_w.copy()
       prev_grad_ub = list_u_grad_b.copy()
@@ -531,7 +570,7 @@ def RMS_SGD(theta,b,epochs,eta,beta,activation,x_train,y_train,neurons, num_laye
     wandb.log({"train_accuracy": train_accuracy, "validation_accuracy": val_accuracy, "training_loss": loss, "validation cost": val_loss, 'epoch': t})
   return(theta,b)
 
-def adam_SGD(theta,b,epochs,eta,beta1,beta2,activation,x_train,y_train,neurons, num_layers,batch_size,loss_fun,weight_decay):
+def adam_SGD(theta,b,epochs,eta,beta1,beta2,activation,x_train,y_train,neurons, num_layers,batch_size,loss_fun,weight_decay,epsilon):
   
   t=0
   global x_val
@@ -610,8 +649,8 @@ def adam_SGD(theta,b,epochs,eta,beta1,beta2,activation,x_train,y_train,neurons, 
         
         # print(theta)
         for i in range(0,len(list_grad_w)):
-          theta[i] -= (eta * list_mhat_w[i].transpose())/(list_vhat_w[i].transpose() + 1e-6) ** 0.5
-          b[i] -= (eta * list_mhat_b[i].transpose())/(list_vhat_b[i].transpose()+ 1e-6) ** 0.5
+          theta[i] -= (eta * list_mhat_w[i].transpose())/(list_vhat_w[i].transpose() + epsilon) ** 0.5
+          b[i] -= (eta * list_mhat_b[i].transpose())/(list_vhat_b[i].transpose()+ epsilon) ** 0.5
         
         list_mhat_w.clear()
         list_mhat_b.clear()
@@ -657,8 +696,8 @@ def adam_SGD(theta,b,epochs,eta,beta1,beta2,activation,x_train,y_train,neurons, 
       
       # print(theta)
       for i in range(0,len(list_grad_w)):
-        theta[i] -= (eta * list_mhat_w[i].transpose())/(list_vhat_w[i].transpose() + 1e-6) ** 0.5
-        b[i] -= (eta * list_mhat_b[i].transpose())/(list_vhat_b[i].transpose()+ 1e-6) ** 0.5
+        theta[i] -= (eta * list_mhat_w[i].transpose())/(list_vhat_w[i].transpose() + epsilon) ** 0.5
+        b[i] -= (eta * list_mhat_b[i].transpose())/(list_vhat_b[i].transpose()+ epsilon) ** 0.5
       
       list_mhat_w.clear()
       list_mhat_b.clear()
@@ -794,7 +833,7 @@ def NAG(theta,b,epochs,eta,beta,activation,x_train,y_train,neurons, num_layers,b
     wandb.log({"train_accuracy": train_accuracy, "validation_accuracy": val_accuracy, "training_loss": loss, "validation cost": val_loss, 'epoch': t})
   return(theta,b)
 
-def nadam(theta,b,epochs,eta,beta1,beta2,activation,x_train,y_train,neurons, num_layers,batch_size,loss_fun,weight_decay):
+def nadam(theta,b,epochs,eta,beta1,beta2,activation,x_train,y_train,neurons, num_layers,batch_size,loss_fun,weight_decay,epsilon):
 
   t=0
   global x_val
@@ -873,8 +912,8 @@ def nadam(theta,b,epochs,eta,beta1,beta2,activation,x_train,y_train,neurons, num
 
         
         for i in range(0,len(list_grad_w)):
-          theta[i] -= (eta * list_mhat_w[i].transpose())/(list_vhat_w[i].transpose() + 1e-6) ** 0.5
-          b[i] -= (eta * list_mhat_b[i].transpose())/(list_vhat_b[i].transpose()+ 1e-6) ** 0.5
+          theta[i] -= (eta * list_mhat_w[i].transpose())/(list_vhat_w[i].transpose() + epsilon) ** 0.5
+          b[i] -= (eta * list_mhat_b[i].transpose())/(list_vhat_b[i].transpose()+ epsilon) ** 0.5
         
         list_mhat_w.clear()
         list_mhat_b.clear()
@@ -924,8 +963,8 @@ def nadam(theta,b,epochs,eta,beta1,beta2,activation,x_train,y_train,neurons, num
         nadam_term_b.append( beta1 * list_mhat_b[i] + ( (1 - beta1) * list_grad_b[i]) / (1 - beta1 ** int(image_no /batch_size) ))
       # print(theta)
       for i in range(0,len(list_grad_w)):
-        theta[i] -= (eta * nadam_term_w[i].transpose())/(list_vhat_w[i].transpose() + 1e-6) ** 0.5
-        b[i] -= (eta * nadam_term_b[i].transpose())/(list_vhat_b[i].transpose()+ 1e-6) ** 0.5
+        theta[i] -= (eta * nadam_term_w[i].transpose())/(list_vhat_w[i].transpose() + epsilon) ** 0.5
+        b[i] -= (eta * nadam_term_b[i].transpose())/(list_vhat_b[i].transpose()+ epsilon) ** 0.5
       
       nadam_term_w.clear()
       nadam_term_b.clear()
@@ -975,14 +1014,14 @@ def nadam(theta,b,epochs,eta,beta1,beta2,activation,x_train,y_train,neurons, num
 # num_layers = len(neurons) - 2
 # weight_decay = 0.0005
 
-def neural_network(x_train,y_train,x_test,y_test,eta,beta1,beta2,activation,initializer,optimizer,batch_size,epochs,loss_fun,weight_decay,num_layers,neurons):
+def neural_network(x_train,y_train,x_test,y_test,eta,beta_mom,beta,beta1,beta2,epsilon,activation,initializer,optimizer,batch_size,epochs,loss_fun,weight_decay,num_layers,neurons):
   neurons = [neurons]*(num_layers+2)
   neurons[0] = 784
   neurons[-1] = 10
-  if(initializer == "xavier"):
+  if(initializer == "Xavier"):
     theta = initilize_theta_xavier(num_layers,neurons)
     b = initilize_bias(num_layers,neurons)
-  elif (initializer == "random_normal"):
+  elif (initializer == "random"):
     theta = initilize_theta_random_normal(num_layers,neurons)
     b = initilize_bias(num_layers,neurons)
   elif (initializer == "random_uniform"):
@@ -995,15 +1034,15 @@ def neural_network(x_train,y_train,x_test,y_test,eta,beta1,beta2,activation,init
   if(optimizer == "sgd"):
     theta,b = SGD(theta,b,epochs,eta,beta1,activation,x_train,y_train,neurons, num_layers,batch_size,loss_fun,weight_decay)
   elif(optimizer == "momentum"):
-    theta,b = momentum_SGD(theta,b,epochs,eta,beta1,activation,x_train,y_train,neurons, num_layers,batch_size,loss_fun,weight_decay)
-  elif(optimizer == "rms"):
-    theta,b = RMS_SGD(theta,b,epochs,eta,beta1,activation,x_train,y_train,neurons, num_layers,batch_size,loss_fun,weight_decay)
+    theta,b = momentum_SGD(theta,b,epochs,eta,beta_mom,activation,x_train,y_train,neurons, num_layers,batch_size,loss_fun,weight_decay)
+  elif(optimizer == "rmsprop"):
+    theta,b = RMS_SGD(theta,b,epochs,eta,beta,activation,x_train,y_train,neurons, num_layers,batch_size,loss_fun,weight_decay,epsilon)
   elif(optimizer == "adam"):
-    theta,b = adam_SGD(theta,b,epochs,eta,beta1,beta2,activation,x_train,y_train,neurons, num_layers,batch_size,loss_fun,weight_decay)
+    theta,b = adam_SGD(theta,b,epochs,eta,beta1,beta2,activation,x_train,y_train,neurons, num_layers,batch_size,loss_fun,weight_decay,epsilon)
   elif(optimizer == "nag"):
-    theta,b = NAG(theta,b,epochs,eta,beta1,activation,x_train,y_train,neurons, num_layers,batch_size,loss_fun,weight_decay)
+    theta,b = NAG(theta,b,epochs,eta,beta_mom,activation,x_train,y_train,neurons, num_layers,batch_size,loss_fun,weight_decay)
   elif(optimizer == "nadam"):
-    theta,b = nadam(theta,b,epochs,eta,beta1,beta2,activation,x_train,y_train,neurons, num_layers,batch_size,loss_fun,weight_decay)
+    theta,b = nadam(theta,b,epochs,eta,beta1,beta2,activation,x_train,y_train,neurons, num_layers,batch_size,loss_fun,weight_decay,epsilon)
   else :
     print("Invalid Optimizer")
 
@@ -1017,26 +1056,6 @@ def neural_network(x_train,y_train,x_test,y_test,eta,beta1,beta2,activation,init
 # print(accuracy)
 
 
-import argparse
-parser = argparse.ArgumentParser()
-parser.add_argument('-wp' , '--wandb_project' , required = False , metavar = "" , default = 'test-3' , type = str , help = "Project name used to track experiments in Weights & Biases dashboard")
-parser.add_argument('-we' , '--wandb_entity' , required = False , metavar = "" , default = 'rajmahajan24' , type = str , help = "Wandb Entity used to track experiments in the Weights & Biases dashboard.")
-parser.add_argument('-d' , '--dataset' , required = False , metavar = "" , default = 'fashion_mnist' , type = str , choices = ["mnist","fashion_mnist"] ,help = "choices: ["mnist", "fashion_mnist"]")
-parser.add_argument('-e' , '--epochs' , required = False , metavar = "" , default = '1' , type = str , help = "Number of epochs to train neural network.")
-parser.add_argument('-b' , '--batch_size' , required = False , metavar = "" , default = '4' , type = str , help = "Batch size used to train neural network.")
-parser.add_argument('-l' , '--loss' , required = False , metavar = "" , default = 'cross_entropy' , type = str , choices = ["mean_squared_error", "cross_entropy"] , help = "choices: ["mean_squared_error", "cross_entropy"]")
-parser.add_argument('-o' , '--optimizer' , required = False , metavar = "" , default = 'sgd' , type = str , choices = ["sgd", "momentum", "nag", "rmsprop", "adam", "nadam"] , help = "choices: ["sgd", "momentum", "nag", "rmsprop", "adam", "nadam"]")
-parser.add_argument('-lr' , '--learning_rate' , required = False , metavar = "" , default = '0.1' , type = str , help = "Learning rate used to optimize model parameters")
-parser.add_argument('-m' , '--momentum' , required = False , metavar = "" , default = '0.5' , type = str , help = "Momentum used by momentum and nag optimizers.")
-parser.add_argument('-beta' , '--beta' , required = False , metavar = "" , default = '0.5' , type = str , help = "Beta used by rmsprop optimizer")
-parser.add_argument('-beta1' , '--beta1' , required = False , metavar = "" , default = '0.5' , type = str , help = "Beta1 used by adam and nadam optimizers.")
-parser.add_argument('-beta2' , '--beta2' , required = False , metavar = "" , default = '0.5' , type = str , help = "Beta2 used by adam and nadam optimizers.")
-parser.add_argument('-eps' , '--epsilon' , required = False , metavar = "" , default = '0.000001' , type = str , help = "Epsilon used by optimizers.")
-parser.add_argument('-w_d' , '--weight_decay' , required = False , metavar = "" , default = '0' , type = str , help = "Weight decay used by optimizers.")
-parser.add_argument('-w_i' , '--weight_init' , required = False , metavar = "" , default = 'random' , type = str , choices = ["random", "Xavier"] , help = "choices: ["random", "Xavier"]")
-parser.add_argument('-nhl' , '--num_layers' , required = False , metavar = "" , default = '1' , type = str , help = "Number of hidden layers used in feedforward neural network.")
-parser.add_argument('-sz' , '--hidden_size' , required = False , metavar = "" , default = '4' , type = str , help = "Number of hidden neurons in a feedforward layer.")
-parser.add_argument('-a' , '--activation' , required = False , metavar = "" , default = 'sigmoid' , type = str , choices = ["identity", "sigmoid", "tanh", "ReLU"] , help = "choices: ["identity", "sigmoid", "tanh", "ReLU"]")
 def run_NN():
     # Default values for hyper-parameters
     # config_defaults = {
@@ -1058,21 +1077,28 @@ def run_NN():
     config = wandb.config
 
     # Local variables, values obtained from wandb config
-    num_neurons = argparse.--hidden_size
-    num_hidden = argparse.--num_layers
-    init_mode = argparse.--weight_init
-    epochs = argparse.--epochs
-    batch_size = argparse.--batch_size
-    learning_rate = argparse.--learning_rate
-    activation_f = argparse.--activation
-    L2_lamb = argparse.--weight_decay
-    optimizer = argparse.--optimizer
-    loss_fun = argparse.--loss
+
+    num_neurons = int(argparse.hidden_size)
+    num_hidden = int(argparse.num_layers)
+    init_mode = argparse.weight_init
+    epochs = int(argparse.epochs)
+    batch_size = int(argparse.batch_size)
+    learning_rate = float(argparse.learning_rate)
+    activation_f = argparse.activation
+    L2_lamb = float(argparse.weight_decay)
+    optimizer = argparse.optimizer
+    loss_fun = argparse.loss
+    beta_mom = float(argparse.momentum)
+    beta = float(argparse.beta)
+    beta1 = float(argparse.beta1)
+    beta2 = float(argparse.beta2)
+    epsilon = float(argparse.epsilon)
+    weight_decay = float(argparse.weight_decay)
 
     # Display the hyperparameters
     run_name = "lr_{}_ac_{}_in_{}_op_{}_bs_{}_L2_{}_ep_{}_nn_{}_nh_{}".format(learning_rate, activation_f, init_mode, optimizer, batch_size, L2_lamb, epochs, num_neurons, num_hidden)
     print(run_name)
-    neural_network(x_train,y_train,x_test,y_test,learning_rate,0.9,0.999,activation_f,init_mode,optimizer,batch_size,epochs,loss_fun,0.0005,num_hidden,num_neurons)
+    neural_network(x_train,y_train,x_test,y_test,learning_rate,beta_mom,beta,beta1,beta2,epsilon,activation_f,init_mode,optimizer,batch_size,epochs,loss_fun,weight_decay,num_hidden,num_neurons)
     wandb.run.name = run_name
     wandb.run.save()
 
@@ -1094,7 +1120,7 @@ def run_NN():
 #             "values": ["xavier", "random_normal"]
 #         },
 #         "optimizer": {
-#             "values": ["sgd", "momentum", "nag", "adam", "nadam", "rms"]
+#             "values": ["sgd", "momentum", "nag", "adam", "nadam", "rmsprop"]
 #         },
 #         "batch_size": {
 #             "values": [16,32,64]
@@ -1114,7 +1140,8 @@ def run_NN():
 #     }
 # }
 
-sweep_id = wandb.sweep(sweep_config, entity=argparse.--wandb_entity, project=argparse.--wandb_project)
-wandb.agent(sweep_id, run_NN, count=120)
+# sweep_id = wandb.sweep(sweep_config, entity=argparse.wandb_entity, project=argparse.wandb_project)
+# wandb.agent(sweep_id, run_NN, count=1)
+run_NN()
 
 # wandb.log({"training_acc": train_acc, "validation_accuracy": val_acc, "training_loss": cost, "validation cost": val_cost, 'epoch': count})
