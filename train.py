@@ -26,10 +26,10 @@ import math
 import pandas as pd
 import matplotlib.pyplot as plt
 
-
+# taking parameters.
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument('-wp' , '--wandb_project' , required = False , metavar = "" , default = 'train_02' , type = str , help = "Project name used to track experiments in Weights & Biases dashboard")
+parser.add_argument('-wp' , '--wandb_project' , required = False , metavar = "" , default = 'train_03' , type = str , help = "Project name used to track experiments in Weights & Biases dashboard")
 parser.add_argument('-we' , '--wandb_entity' , required = False , metavar = "" , default = 'rajmahajan24' , type = str , help = "Wandb Entity used to track experiments in the Weights & Biases dashboard.")
 parser.add_argument('-d' , '--dataset' , required = False , metavar = "" , default = 'fashion_mnist' , type = str , choices = ["mnist","fashion_mnist"] ,help = 'choices: ["mnist", "fashion_mnist"]')
 parser.add_argument('-e' , '--epochs' , required = False , metavar = "" , default = '10' , type = str , help = "Number of epochs to train neural network.")
@@ -57,25 +57,21 @@ elif(argparse.dataset == 'mnist'):
 
 from sklearn.model_selection import train_test_split
 
-# Load the Fashion-MNIST dataset
-
+# reshaping the data
 X_train=X_train.reshape(X_train.shape[0],784)
 x_test=x_test.reshape(x_test.shape[0],784)
 Y_train=Y_train.reshape(60000,1)
 y_test=y_test.reshape(10000,1)
-# X_train.shape
-Y_train.shape
 
 # Normalizing the data
 X_train=X_train/255.0
 x_test=x_test/255.0
 y_test.shape
 
+# splitting into train and validation set
 x_train,x_val,y_train,y_val = train_test_split(X_train , Y_train , test_size = 0.1 , random_state = 100)
-# x_train.shape
-x_val.shape
 
-
+# creating wandb project
 import wandb
 wandb.init(project=argparse.wandb_project)
 
@@ -117,7 +113,6 @@ def derivative_tanh(x):
     return (1 - (np.tanh(x)**2))
 
 def softmax(v):
-  # ans = np.exp(v) / np.sum(np.exp(v), axis=0)
   z = v - max(v)
   numerator = np.exp(z)
   denominator = np.sum(numerator)
@@ -261,11 +256,7 @@ def backward_prop(theta,h_list,a_list,y,yhat,num_layers,batch_size,activation,lo
       grad_a = grad_h * derivative_activation_fun(activation,a_list[k-1])
   return(list_grad_w , list_grad_b)
   
-
-# grad_b.shape = 32 x 1
-# grad_w.shape = 32 x 32
-# grad_a.shape = 10/32 x 1
-
+# computes accuracy for given test data.
 def image_pridiction(x_test, y_test, theta, b, num_layers,activation):
   img_no = 0
   wrong_count = 0
@@ -276,15 +267,12 @@ def image_pridiction(x_test, y_test, theta, b, num_layers,activation):
     yhat = temp_ans[0]
     temp = -1
     predicted_class = -1
-    # print(yhat.shape)
     sum=0
     for i in range(0 , 10):
       sum+=yhat[i]
       if(temp < yhat[i]):
         predicted_class = i
         temp = yhat[i]
-    # print(sum)
-    # print(predicted_class)
     if(clas != predicted_class):
       wrong_count+=1
     img_no+=1
@@ -333,7 +321,6 @@ def SGD(theta,b,epochs,eta,beta,activation,x_train,y_train,neurons, num_layers,b
         b = add_list_grad_eta(b.copy(), list_grad_b , eta)
         list_grad_w.clear()
         list_grad_b.clear()
-      # print(theta)
       image_no += 1
 
     # Update theta for last few images
@@ -693,8 +680,6 @@ def adam_SGD(theta,b,epochs,eta,beta1,beta2,activation,x_train,y_train,neurons, 
         list_vhat_w.append(list_v_w[i]/(1-beta2 ** int(image_no /batch_size)))
         list_vhat_b.append(list_v_b[i]/(1-beta2 ** int(image_no /batch_size)))
 
-      
-      # print(theta)
       for i in range(0,len(list_grad_w)):
         theta[i] -= (eta * list_mhat_w[i].transpose())/(list_vhat_w[i].transpose() + epsilon) ** 0.5
         b[i] -= (eta * list_mhat_b[i].transpose())/(list_vhat_b[i].transpose()+ epsilon) ** 0.5
@@ -736,7 +721,7 @@ def NAG(theta,b,epochs,eta,beta,activation,x_train,y_train,neurons, num_layers,b
     loss = 0
     val_loss = 0
     while(image_no<len(x_train)):
-      # forward propgation
+      
       h=x_train[image_no].reshape(784,1)
       w_lookahead = []
       b_lookahead = []
@@ -747,7 +732,7 @@ def NAG(theta,b,epochs,eta,beta,activation,x_train,y_train,neurons, num_layers,b
         for i in range(len(prev_grad_uw)):
           w_lookahead.append(theta[i] - beta * prev_grad_uw[i].transpose())
           b_lookahead.append(b[i] - beta * prev_grad_ub[i].transpose())
-      
+      # forward propgation
       fp_list = forward_prop(activation,w_lookahead,b_lookahead,num_layers,h)
       # backward propogation
       a_list = fp_list[2]
@@ -784,7 +769,6 @@ def NAG(theta,b,epochs,eta,beta,activation,x_train,y_train,neurons, num_layers,b
             list_u_grad_w.append(beta * prev_grad_uw[i] + (1 - beta) * list_grad_w[i])
             list_u_grad_b.append(beta * prev_grad_ub[i] + (1 - beta) * list_grad_b[i])
         
-        # print(theta)
         theta = add_list_grad_eta(theta.copy() , list_u_grad_w, eta)
         b = add_list_grad_eta(b.copy(), list_u_grad_b , eta)
         
@@ -857,7 +841,6 @@ def nadam(theta,b,epochs,eta,beta1,beta2,activation,x_train,y_train,neurons, num
       h=x_train[image_no].reshape(784,1)
       fp_list = forward_prop(activation,theta,b,num_layers,h)
 
-      # backward propogation
       a_list = fp_list[2]
       h_list = fp_list[1]
       y_hat = fp_list[0]
@@ -987,32 +970,7 @@ def nadam(theta,b,epochs,eta,beta1,beta2,activation,x_train,y_train,neurons, num
     wandb.log({"train_accuracy": train_accuracy, "validation_accuracy": val_accuracy, "training_loss": loss, "validation cost": val_loss, 'epoch': t})
   return(theta,b)
 
-#hyperparameters
 
-# LEARNING_RATE = 0.001
-# ACTIVATION = "sigmoid"
-# INITIALIZER = "xavier"
-# OPTIMIZER = "nag"
-# BATCH_SIZE = 32
-# EPOCHS = 10
-# L2_lambda = 0.0005
-# LAYER_DIMS = [784,64,32,64,10]
-
-# LOSS = 'categorical_crossentropy'
-
-
-# learning_rate = 0.01
-# beta1 = 0.9
-# beta2 = 0.999
-# activation = "relu"
-# initializer = "xavier"
-# optimizer = "momentum"
-# batch_size = 32
-# epochs = 10
-# loss_fun = "cross_entropy"
-# neurons = [784,32,32,10]
-# num_layers = len(neurons) - 2
-# weight_decay = 0.0005
 
 def neural_network(x_train,y_train,x_test,y_test,eta,beta_mom,beta,beta1,beta2,epsilon,activation,initializer,optimizer,batch_size,epochs,loss_fun,weight_decay,num_layers,neurons):
   neurons = [neurons]*(num_layers+2)
@@ -1046,37 +1004,17 @@ def neural_network(x_train,y_train,x_test,y_test,eta,beta_mom,beta,beta1,beta2,e
   else :
     print("Invalid Optimizer")
 
-
+# testing accuracy
+accuracy = image_pridiction(x_test, y_test, theta, b, num_layers,activation)
+print("test accuracy = ",accuracy)
   return(theta,b)
 
-# theta , b =neural_network(x_train,y_train,x_test,y_test,learning_rate,beta1,beta2,activation,initializer,optimizer,batch_size,epochs,loss_fun,weight_decay)
-
-#  # testing accuracy
-# accuracy = image_pridiction(x_test, y_test, theta, b, num_layers,activation)
-# print(accuracy)
 
 
 def run_NN():
-    # Default values for hyper-parameters
-    # config_defaults = {
-    #     'epochs': 10,
-    #     'batch_size': 64,
-    #     'learning_rate': 1e-2,
-    #     'activation_f': 'relu',
-    #     'optimizer': 'adam',
-    #     'init_mode': 'xavier',
-    #     'L2_lamb': 0,
-    #     'num_neurons': 32,
-    #     'num_hidden': 2
-    # }
 
-    # Initialize a new wandb run
     wandb.init()
-    
-    # Config is a variable that holds and saves hyperparameters and inputs
     config = wandb.config
-
-    # Local variables, values obtained from wandb config
 
     num_neurons = int(argparse.hidden_size)
     num_hidden = int(argparse.num_layers)
@@ -1098,50 +1036,11 @@ def run_NN():
     # Display the hyperparameters
     run_name = "lr_{}_ac_{}_in_{}_op_{}_bs_{}_L2_{}_ep_{}_nn_{}_nh_{}".format(learning_rate, activation_f, init_mode, optimizer, batch_size, L2_lamb, epochs, num_neurons, num_hidden)
     print(run_name)
-    neural_network(x_train,y_train,x_test,y_test,learning_rate,beta_mom,beta,beta1,beta2,epsilon,activation_f,init_mode,optimizer,batch_size,epochs,loss_fun,weight_decay,num_hidden,num_neurons)
+    theta , b = neural_network(x_train,y_train,x_test,y_test,learning_rate,beta_mom,beta,beta1,beta2,epsilon,activation_f,init_mode,optimizer,batch_size,epochs,loss_fun,weight_decay,num_hidden,num_neurons)
+    # testing accuracy
+    accuracy = image_pridiction(x_test, y_test, theta, b, num_layers,activation)
+    print("test accuracy = ",accuracy)
     wandb.run.name = run_name
     wandb.run.save()
 
-# sweep_config = {
-#   "name": "CS6910 Assignment 1 - Squared Error Loss",
-#   "metric": {
-#       "name":"validation_accuracy",
-#       "goal": "maximize"
-#   },
-#   "method": "random",
-#   "parameters": {
-#         "learning_rate": {
-#             "values": [0.1, 0.01]
-#         },
-#         "activation_f": {
-#             "values": ["sigmoid", "relu", "tanh"]
-#         },
-#         "init_mode": {
-#             "values": ["xavier", "random_normal"]
-#         },
-#         "optimizer": {
-#             "values": ["sgd", "momentum", "nag", "adam", "nadam", "rmsprop"]
-#         },
-#         "batch_size": {
-#             "values": [16,32,64]
-#         },
-#         "epochs": {
-#             "values": [5]
-#         },
-#         "L2_lamb": {
-#             "values": [0, 0.0005, 0.5]
-#         },
-#         "num_neurons": {
-#             "values": [32,64,128]
-#         },
-#         "num_hidden": {
-#             "values": [2,3,4]
-#         }
-#     }
-# }
-
-# sweep_id = wandb.sweep(sweep_config, entity=argparse.wandb_entity, project=argparse.wandb_project)
-# wandb.agent(sweep_id, run_NN, count=1)
 run_NN()
-
-# wandb.log({"training_acc": train_acc, "validation_accuracy": val_acc, "training_loss": cost, "validation cost": val_cost, 'epoch': count})
