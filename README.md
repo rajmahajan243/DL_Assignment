@@ -94,3 +94,55 @@ This function takes the parameters and calls the appropriate intitlizer then opt
 def image_pridiction(x_test, y_test, theta, b, num_layers,activation)
 ```
 This function takes W and B and computes accuracy on actual classes and prints the accuracy.
+
+### Chosing activation fucntion
+```
+def activation_fun(activation,a)
+```
+
+### chosing loss function
+```
+def loss_function(loss_fun,yhat,y)
+``` 
+
+### Forward Propogation
+```
+def forward_prop(activation,theta,b,num_layers,h)
+```
+Works imagewise ie. at time only one image will be passed 
+
+### backpropogation
+```
+def backward_prop(theta,h_list,a_list,y,yhat,num_layers,batch_size,activation,loss_fun)
+```
+Works imagewise ie. at time only one image expected output  will be passed
+
+### SGD
+```
+def SGD(theta,b,epochs,eta,beta,activation,x_train,y_train,neurons, num_layers,batch_size,loss_fun,weight_decay)
+```
+
+### momentum
+```
+def momentum_SGD(theta,b,epochs,eta,beta,activation,x_train,y_train,neurons, num_layers,batch_size,loss_fun,weight_decay)
+```
+
+### RMSprop
+```
+def RMS_SGD(theta,b,epochs,eta,beta,activation,x_train,y_train,neurons, num_layers,batch_size,loss_fun,weight_decay,epsilon)
+```
+
+### Adam
+```
+def adam_SGD(theta,b,epochs,eta,beta1,beta2,activation,x_train,y_train,neurons, num_layers,batch_size,loss_fun,weight_decay,epsilon)
+```
+
+### Nadam
+```
+def nadam(theta,b,epochs,eta,beta1,beta2,activation,x_train,y_train,neurons, num_layers,batch_size,loss_fun,weight_decay,epsilon)
+```
+
+### Nestrov
+```
+def NAG(theta,b,epochs,eta,beta,activation,x_train,y_train,neurons, num_layers,batch_size,loss_fun,weight_decay)
+```
