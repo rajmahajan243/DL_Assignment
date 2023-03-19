@@ -12,6 +12,7 @@ Roll Number -  CS22M067
 
 The objective is to create a feedforward neural network structure that includes backpropagation and allows for the selection of available optimizers, activation functions, and loss functions. The model will be tested on the Fashion-MNIST dataset.
 
+### Report link -  https://api.wandb.ai/links/rajmahajan24/qrl098dt
 
 ### Model parameters - 
 
