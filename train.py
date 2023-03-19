@@ -10,12 +10,8 @@ Original file is located at
 # Name - Raj Mahajan
 # Roll Number - CS22M067
 # Assignment 1
-# Question 3
-# Optimizers combined
-# Some changes
-# adding identity function
+# Neural Network
 
-# !pip install wandb
 import wandb
 wandb.login(key = "c28eda24dacbd50a57332e445cfdfb2f4c16799c")
 
@@ -29,7 +25,7 @@ import matplotlib.pyplot as plt
 # taking parameters.
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument('-wp' , '--wandb_project' , required = False , metavar = "" , default = 'train_03' , type = str , help = "Project name used to track experiments in Weights & Biases dashboard")
+parser.add_argument('-wp' , '--wandb_project' , required = False , metavar = "" , default = 'CS6910_A1_final' , type = str , help = "Project name used to track experiments in Weights & Biases dashboard")
 parser.add_argument('-we' , '--wandb_entity' , required = False , metavar = "" , default = 'rajmahajan24' , type = str , help = "Wandb Entity used to track experiments in the Weights & Biases dashboard.")
 parser.add_argument('-d' , '--dataset' , required = False , metavar = "" , default = 'fashion_mnist' , type = str , choices = ["mnist","fashion_mnist"] ,help = 'choices: ["mnist", "fashion_mnist"]')
 parser.add_argument('-e' , '--epochs' , required = False , metavar = "" , default = '10' , type = str , help = "Number of epochs to train neural network.")
@@ -239,7 +235,7 @@ def forward_prop(activation,theta,b,num_layers,h):
   yhat = softmax(a)
   return(yhat,h_list,a_list)
 
-# only for 1 image
+# only for 1 imabackge
 def backward_prop(theta,h_list,a_list,y,yhat,num_layers,batch_size,activation,loss_fun):
   grad_a=-(actual_prob_dist(y) - yhat)
   if(loss_fun == "mean_squared_error"):
@@ -1004,9 +1000,9 @@ def neural_network(x_train,y_train,x_test,y_test,eta,beta_mom,beta,beta1,beta2,e
   else :
     print("Invalid Optimizer")
 
-# testing accuracy
-accuracy = image_pridiction(x_test, y_test, theta, b, num_layers,activation)
-print("test accuracy = ",accuracy)
+  # testing accuracy
+  accuracy = image_pridiction(x_test, y_test, theta, b, num_layers,activation)
+  print("test accuracy = ",accuracy)
   return(theta,b)
 
 
