@@ -6,7 +6,7 @@ Name -  Raj Mahajan
 Roll Number -  CS22M067
 ***
 
-## Instruction to run train.py
+## Instruction for train.py
 
 ### Objective -
 
